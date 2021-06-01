@@ -1,0 +1,83 @@
+---
+title: "PRA 2 - Limpieza y Análisis de Datos"
+author: Jonathan Zambrano / Tatiana Piccolomini
+date: "Junio 2021"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+---
+
+
+
+
+**Introducción**
+
+En esta actividad se realizará un análisis estadístico descriptivo e inferencial de los datos procesados en la actividad 1. Recordamos que el conjunto de datos usado en la actividad previa consistía en el conjunto de datos Fifa.csv, que se encuentra disponible en la plataforma Kaggle: https://www.kaggle.com/artimous/complete-fifa-2017-player-dataset-global.
+
+Este conjunto de datos contiene el estilo de juego del videojuego de consola Fifa 2017, así como estadísticas reales de los jugadores de futbol. El conjunto de datos contiene más de 17,500 registros y 53 variables.
+
+Las principales variables que se usarán en esta actividad son:
+
+  - Name (Nombre del jugador)
+  - Nationality (Nacionalidad del jugador)
+  - National_Position (Posición de juego en equipo nacional).
+  - National_Kit (Número de equipación en equipo nacional)
+  - Club (Nombre del club)
+  - Club_Position (Posición de juego en club)
+  - Club_Kit (Número de equipación en club)
+  - Club_Joining (Fecha en la que empezó en el club)
+  - Contract_Expire (Año finalización del contrato)
+  - Rating (Valoración global del jugador, entre 0 y 100)
+  - Height (Altura)
+  - Weight (Peso)
+  - Preffered_Foot (Pie preferido)
+  - Birth_Date (Fecha de nacimiento)
+  - Age (Edad)
+  - Preffered_Position (Posición preferida)
+  - Work_Rate (valoración cualitativa en términos de ataque-defensa)
+  - Weak_foot (valoración de 1 a 5 de control y potencia de la pierna no preferida)
+  - Skill_Moves (valoración de 1 a 5 de la habilidad en movimientos del jugador)
+  - El resto de variables hacen referencia a atributos del jugador.
+
+En esta actividad realizaremos un análisis descriptivo e inferencial. En especial, nos interesa investigar la puntuación del jugador (Rating) y otras variables como el control de pelota (Ball_Control) y la técnica (Dribbling). Asumimos que este conjunto de datos es una muestra representativa de los jugadores de la última década (población).
+
+******
+# Lectura del fichero
+******
+
+Enunciado: Leer el fichero fifa_clean.csv. Validar que los datos leídos son correctos. Si no es así, realizar las conversiones oportunas.
+
+En este apartado realizaremos en primer lugar la lectura del archivo csv proporcionado, y posteriormente, se realizará una presentación de los datos y sus tipos para analizar las correcciones que hay que realizar: 
+
+```{r,eval=TRUE,echo=TRUE}
+# Lectura de archivo csv
+data <- read.csv('Uncleaned_DS_jobs.csv')
+# Presentación de los datos
+str(data)
+summary(data)
+data[data == -1] <- NAtabl
+```
+
+
+```{r,eval=TRUE,echo=TRUE}
+#Eliminamos Index
+data <- data[,-c(1)]
+library(stringr)
+
+data$Salary.Estimate <- str_extract(data$Salary.Estimate,"[^(]+")
+data$Salary.Estimate <- str_remove_all(data$Salary.Estimate,"\\$")
+data$Salary.Estimate <- str_remove_all(data$Salary.Estimate,"\\K")
+
+data$Company.Name <- str_extract(data$Company.Name,"[^\\n]+")
+
+data$Size <- str_remove(data$Size, "\\ employees")
+```
+
+
