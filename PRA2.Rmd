@@ -25,9 +25,6 @@ output:
 ```{r,eval=TRUE,echo=TRUE}
 # Lectura de archivo csv
 data <- read.csv('Uncleaned_DS_jobs.csv')
-# Presentación de los datos
-str(data)
-summary(data)
 data[data == -1] <- NAtabl
 ```
 
