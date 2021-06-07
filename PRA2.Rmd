@@ -16,25 +16,35 @@ output:
 
 
 
-
-
 ******
-# Limpieza de los datos
+# Lectura del fichero
 ******
+
+Enunciado: Leer el fichero fifa_clean.csv. Validar que los datos leídos son correctos. Si no es así, realizar las conversiones oportunas.
+
+En este apartado realizaremos en primer lugar la lectura del archivo csv proporcionado, y posteriormente, se realizará una presentación de los datos y sus tipos para analizar las correcciones que hay que realizar: 
 
 ```{r,eval=TRUE,echo=TRUE}
 # Lectura de archivo csv
 data <- read.csv('Uncleaned_DS_jobs.csv')
+# Presentación de los datos
+#str(data)
+#summary(data)
 data[data == -1] <- NA
 ```
 
+******
+# Limpieza de datos
+******
 
 ```{r,eval=TRUE,echo=TRUE}
-data <- data[,-c(1,3)]
+#Eliminamos Index y descripcion
+data <- data[,-c(1,4)]
 
 # Limpieza de datos
 library(stringr)
 
+# Limpieza de nombres
 data$Salary.Estimate <- str_extract(data$Salary.Estimate,"[^(]+")
 data$Salary.Estimate <- str_remove_all(data$Salary.Estimate,"\\$")
 data$Salary.Estimate <- str_remove_all(data$Salary.Estimate,"\\K")
@@ -43,7 +53,144 @@ data$Company.Name <- str_extract(data$Company.Name,"[^\\n]+")
 
 data$Size <- str_remove(data$Size, "\\ employees")
 
-write.csv(data,"Cleaned_DS_jobs.csv")
+data$Revenue <- str_remove_all(data$Revenue,"\\$")
+data$Revenue <- str_remove(data$Revenue,fixed(" (USD)"))
+
+library("dplyr")
+
+# Filtrado de tipo de empleo
+
+data <- data %>%
+  mutate(Job.Type = case_when(
+    str_detect(Job.Title,"Data Scientist") ~ "Data Scientist",
+    str_detect(Job.Title,"Data Analyst") ~ "Data Analyst",
+    str_detect(Job.Title,"Business Intelligence Analyst") ~ "Business Intelligence Analyst",
+    str_detect(Job.Title,"Machine Learning") ~ "Machine Learning Engineer",
+    str_detect(Job.Title,"Data Engineer") ~ "Data Engineer",
+  ))
+
+data <- mutate_at(data, c("Job.Type"), ~ replace(., is.na(.), "Other"))
+
+# Calculo de Salario Promedio
+data <- data %>% rowwise() %>%
+  mutate(Salary.Mean = mean(c(as.numeric(strsplit(Salary.Estimate,"\\-")[[1]][1]),
+                           as.numeric(strsplit(Salary.Estimate,"\\-")[[1]][2]))))
+
+data <- ungroup(data)
+
+# Ordenamiento de los datos
+data <- data[,c(14,2,15,3,4,5,6,7,8,9,10,11,12,13)]
+
+#Busqueda de NAs
+apply(is.na(data), 2, sum)
+
+# Reemplazo de NAs numéricos
+data$Rating <- kNN(data)$Rating
+
+# Eliminación de filas sin información de compañia
+missing <- data[rowSums(is.na(data[ , 8:11])) == 4, ]
+index <- which(rowSums(is.na(data[ , 8:11])) == 4)
+data <- data[-index,]
+
+# Cambio de NAs a Unknown
+data <- mutate_at(data, c(7,9,11,12,14),~ replace(., is.na(.), "Unknown"))
+
+# Cambio a Factor
+data$Salary.Estimate = factor(data$Salary.Estimate)
+data$Size = factor(data$Size)
+data$Type.of.ownership = factor(data$Type.of.ownership)
+data$Sector = factor(data$Sector)
+data$Revenue = factor(data$Revenue)
+data$Job.Type = factor(data$Job.Type)
+
+ 
+
 ```
 
 
+```{r,eval=TRUE,echo=TRUE}
+# Outliners
+boxplot(data$Rating)
+boxplot.stats(data$Rating)$out
+boxplot(data$Salary.Mean)
+boxplot.stats(data$Salary.Mean)$out
+```
+
+```{r,eval=TRUE,echo=TRUE}
+# Escritura del Fichero
+write.csv(data,"Cleaned_DS_jobs.csv")
+```
+
+******
+# Análisis de los Datos
+******
+
+Variables a utilizar:
+
+  - Job.Type (factor)
+  - Salary.Mean (numeric)
+  - Rating (numeric)
+  - Size (factor)
+  - Type.of.Ownership (factor)
+  - Sector (factor)
+  - Revenue (factor)
+
+Preguntas:
+
+Que tipo de empresa paga mejor
+
+Que tipo de empresa tiene mejor Rating
+
+
+******
+# Comprobación de normalidad y homogeneidad de la varianza
+******
+
+```{r,eval=TRUE,echo=TRUE}
+data <- data[,c(1,2,3,4,5,6,8,10,12,13)]
+
+shapiro.test(data$Salary.Mean)
+shapiro.test(data$Rating)
+
+fligner.test(Salary.Mean ~ Rating, data = data)
+
+leveneTest(Rating ~ Size, data = data)
+
+```
+
+
+******
+# Pruebas estadísticas
+******
+
+```{r,eval=TRUE,echo=TRUE}
+
+
+# Correlación entre variables 
+cor.test(data$Salary.Mean, data$Rating, method = "spearman", exact = FALSE)
+
+
+# Análisis de Frecuencias
+tapply(data$Salary.Mean, data$Sector, summary)
+apply(data, MARGIN = 2, FUN = table)
+
+
+# Relación de variables 
+tc <- table(data$Job.Type, data$Salary.Mean)
+chisq.test(tc)
+
+# Regresión lineal
+m1 = lm(Salary.Mean ~ Rating + Size + Sector + Job.Type + Revenue + Type.of.ownership, data = data)
+
+
+# Añadir datos para clasificación (Trabajo Bueno o Malo)
+
+data$new[data$Salary.Mean > 130 & data$Rating > 3.5] = "Good"
+data$new[is.na(data$new)] = "Bad"
+
+```
+
+```{r,eval=TRUE,echo=TRUE}
+
+plot(data[c(1,2)])
+```
