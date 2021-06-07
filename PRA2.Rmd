@@ -20,10 +20,6 @@ output:
 # Lectura del fichero
 ******
 
-Enunciado: Leer el fichero fifa_clean.csv. Validar que los datos leídos son correctos. Si no es así, realizar las conversiones oportunas.
-
-En este apartado realizaremos en primer lugar la lectura del archivo csv proporcionado, y posteriormente, se realizará una presentación de los datos y sus tipos para analizar las correcciones que hay que realizar: 
-
 ```{r,eval=TRUE,echo=TRUE}
 # Lectura de archivo csv
 data <- read.csv('Uncleaned_DS_jobs.csv')
